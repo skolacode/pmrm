@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMRM Family Tree Directory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #f4f1eb;
+            --card-bg: #fdfbf7;
+            --card-border: #e6e2da;
+            --text-main: #2c2a27;
+            --text-muted: #6e6a64;
+            --glass-bg: rgba(255, 255, 255, 0.2);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.08);
+            --primary: #4a5d4e;
+            --line-color: #bfae99;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-text-size-adjust: 100%; 
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 12px;
+        }
+
+        /* Viewport Frame for sliding page transitions */
+        .app-viewport {
+            width: 100%;
+            max-width: 1100px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            border: 4px solid #c9c3b8;
+            background: var(--card-bg);
+        }
+
+        .app-stage {
+            display: flex;
+            width: 200%; 
+            align-items: flex-start;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .page {
+            width: 50%; 
+            display: flex;
+            flex-direction: column;
+            background: var(--card-bg);
+        }
+
+        /* ========================================== */
+        /* PAGE 1: DIRECTORY PANEL                    */
+        /* ========================================== */
+        .montage-header {
+            position: relative;
+            height: 220px;
+            background: url('https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=800&q=80') center/cover no-repeat;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        .montage-header::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.25);
+            z-index: 1;
+        }
+
+        .title-card {
+            position: relative;
+            z-index: 2;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            color: #ffffff;
+            width: 90%;
+        }
+
+        .title-card h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+        }
+
+        .title-card p { font-size: 0.85rem; line-height: 1.2; }
+
+        .search-container {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            max-width: 90%;
+            margin-bottom: -36px; 
+        }
+
+        .search-container input {
+            width: 100%;
+            padding: 14px 16px 14px 44px;
+            font-size: 0.95rem;
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .directory-body {
+            padding: 50px 16px 24px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .controls-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 12px;
+        }
+
+        .sort-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .sort-btn { flex-shrink: 0; }
+
+        .sort-btn {
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .names-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+
+        .name-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            padding: 10px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: #ded9d0;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .name-info {
+            font-weight: 500;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* ========================================== */
+        /* PAGE 2: UPDATED TOP-DOWN DRAWING TREE UI    */
+        /* ========================================== */
+        .tree-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--card-border);
+            background: #ffffff;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 8px;
+        }
+
+        .tree-header-title h2 { font-size: 1.1rem; color: var(--text-main); }
+        .tree-header-title p { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* Tree Diagram Container Map - Allows dynamic swipe panning on mobile viewports */
+        .tree-canvas {
+            padding: 30px 16px;
+            overflow: auto;
+            max-height: calc(100vh - 160px);
+            background-color: #faf8f5;
+            display: flex;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Inner wrapper centers the tree when it fits and stays
+           scrollable from the left edge when it overflows. */
+        .tree-inner {
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: max-content;
+        }
+
+        /* Generational Hierarchy Layout Block */
+        .generation-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: max-content;
+        }
+
+        /* STRUCTURE FOR L1 COUPLES (Horizontal Side-by-Side) */
+        .couple-unit-horizontal {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        /* STRUCTURE FOR L2+ COUPLES (Vertical Stacked Stack) */
+        .couple-unit-vertical {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Universal Spouse '+' Operator Label style settings */
+        .spouse-plus {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--line-color);
+            user-select: none;
+            line-height: 1;
+        }
+        .couple-unit-horizontal .spouse-plus { padding: 0 4px; }
+        .couple-unit-vertical .spouse-plus { margin: 2px 0; }
+
+        /* Refined Structural Pillow Oval Pill Node Box */
+        .node-box {
+            background: #ffffff;
+            border: 1.5px solid var(--card-border);
+            border-radius: 30px; 
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            min-width: 130px;
+            max-width: 155px;
+        }
+
+        .node-box.highlight {
+            border-color: var(--primary);
+            background-color: #f1f5f2;
+            box-shadow: 0 4px 10px rgba(74, 93, 78, 0.15);
+        }
+
+        .node-box .node-txt {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Perfect Vertical Line Connectors ('|') */
+        .v-line {
+            width: 2px;
+            height: 28px;
+            background-color: var(--line-color);
+            margin: 4px 0;
+            position: relative;
+        }
+
+        /* SIBLING TRACK SYSTEM (Horizontal layout branch track line rules) */
+        .children-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 24px;
+            position: relative;
+            margin-top: 4px;
+            padding-top: 16px;
+        }
+
+        /* Dynamic horizontal linking line rule linking individual sibling units */
+        .children-row::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background-color: var(--line-color);
+        }
+
+        .child-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Structural connection ticks pointing downwards onto the sub branch columns */
+        .child-branch::before {
+            content: '';
+            position: absolute;
+            top: -16px;
+            width: 2px;
+            height: 16px;
+            background-color: var(--line-color);
+        }
+
+        /* Mobile Scaling Media Queries overrides */
+        @media (max-width: 480px) {
+            body { padding: 6px; align-items: stretch; }
+            .app-viewport { border-radius: 14px; border-width: 3px; }
+
+            .montage-header { height: 180px; padding: 16px 12px; }
+            .title-card { padding: 10px 16px; width: 100%; }
+            .title-card h1 { font-size: 1.5rem; }
+            .title-card p { font-size: 0.75rem; }
+            .search-container { max-width: 100%; }
+            .search-container input { padding: 12px 14px 12px 40px; font-size: 0.9rem; }
+
+            .directory-body { padding: 46px 12px 20px 12px; gap: 12px; }
+            .sort-label { font-size: 0.78rem; }
+            .names-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 8px;
+                max-height: 60vh;
+            }
+            .name-card { padding: 9px 10px; }
+
+            .tree-header { padding: 12px; }
+            .tree-header-title h2 { font-size: 1rem; }
+            .tree-canvas { padding: 24px 12px; max-height: calc(100vh - 130px); }
+            .node-box { min-width: 110px; max-width: 140px; padding: 7px 10px; }
+            .node-box .node-txt { font-size: 0.75rem; }
+            .children-row { gap: 16px; }
+        }
+
+        /* Desktop Scaling Media Queries overrides */
+        @media (min-width: 768px) {
+            body { padding: 40px; }
+            .app-viewport { border-radius: 28px; border-width: 8px; }
+            .montage-header { height: 320px; padding: 30px; }
+            .title-card { padding: 15px 40px; border-radius: 16px; width: auto; }
+            .title-card h1 { font-size: 2.5rem; }
+            .title-card p { font-size: 1rem; }
+            .search-container { max-width: 500px; margin-bottom: -25px; }
+            .search-container input { padding: 16px 24px 16px 50px; font-size: 1rem; }
+            .directory-body { padding: 50px 40px 40px 40px; gap: 20px; }
+            .names-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+            .name-card { padding: 12px 16px; gap: 12px; }
+            .avatar { width: 32px; height: 32px; }
+            .name-info { font-size: 0.95rem; }
+            
+            .tree-header { padding: 24px 40px; }
+            .node-box { min-width: 155px; padding: 10px 20px; }
+            .node-box .node-txt { font-size: 0.88rem; }
+            .children-row { gap: 40px; }
+            .children-row::before { left: 25%; right: 25%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-viewport">
+        <div class="app-stage" id="appStage">
+            
+            <section class="page">
+                <header class="montage-header">
+                    <div class="title-card">
+                        <h1>PMRM</h1>
+                        <p>Pertubuhan Muslim Regunathapuram Malaysia</p>
+                    </div>
+                    <div class="search-container">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" placeholder="Search for family members...">
+                    </div>
+                </header>
+
+                <main class="directory-body">
+                    <div class="controls-panel">
+                        <div class="sort-label">
+                            <i class="fa-solid fa-arrow-down-a-z"></i> 
+                            <span>List of names sorted by A~Z</span>
+                        </div>
+                        <button class="sort-btn" id="sortToggle" data-order="asc">
+                            Sort <i class="fa-solid fa-sort-up"></i>
+                        </button>
+                    </div>
+                    <div class="names-grid" id="namesGrid"></div>
+                </main>
+            </section>
+
+            <section class="page">
+                <header class="tree-header">
+                    <button class="back-btn" id="backToDirectory">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <div class="tree-header-title">
+                        <h2 id="treeTargetName">Lineage View</h2>
+                        <p>PMRM Generation Tree Map</p>
+                    </div>
+                </header>
+
+                <main class="tree-canvas" id="treeCanvas">
+                    </main>
+            </section>
+
+        </div>
+    </div>
+
+    <script>
+        const m = n => `https://randomuser.me/api/portraits/thumb/men/${n}.jpg`;
+        const w = n => `https://randomuser.me/api/portraits/thumb/women/${n}.jpg`;
+
+        /* ============================================================
+           FIRESTORE-SHAPED SAMPLE DATA  (collection: "people")
+           --------------------------------------------------------
+           Each entry mirrors one Firestore document. The tree is NOT
+           stored nested in the DB — instead every person references:
+             - parentId : the bloodline parent's id (null for a root
+                          person and for married-in spouses)
+             - spouseId : the partner's id (null if unmarried)
+             - rootId   : which family tree this person belongs to
+           The nested tree is rebuilt in the browser by buildTreesFromFlat().
+           ============================================================ */
+        const peopleData = [
+            /* ---------- SCENARIO 1: root "Abdul Rahman" ----------
+               Parents > 3 kids (2 married, 1 single) > the 2 married
+               kids each have children. */
+            { id: "p1",  name: "Abdul Rahman", gender: "male",   avatar: m(41), parentId: null, spouseId: "p2",  rootId: "p1" },
+            { id: "p2",  name: "Fatimah",      gender: "female", avatar: w(41), parentId: null, spouseId: "p1",  rootId: "p1" },
+            { id: "p3",  name: "Imran",        gender: "male",   avatar: m(42), parentId: "p1", spouseId: "p4",  rootId: "p1" },
+            { id: "p4",  name: "Nadia",        gender: "female", avatar: w(42), parentId: null, spouseId: "p3",  rootId: "p1" },
+            { id: "p5",  name: "Zara",         gender: "female", avatar: w(43), parentId: "p3", spouseId: null,  rootId: "p1" },
+            { id: "p6",  name: "Omar",         gender: "male",   avatar: m(43), parentId: "p3", spouseId: null,  rootId: "p1" },
+            { id: "p7",  name: "Yusuf",        gender: "male",   avatar: m(44), parentId: "p1", spouseId: "p8",  rootId: "p1" },
+            { id: "p8",  name: "Salma",        gender: "female", avatar: w(44), parentId: null, spouseId: "p7",  rootId: "p1" },
+            { id: "p9",  name: "Layla",        gender: "female", avatar: w(45), parentId: "p7", spouseId: null,  rootId: "p1" },
+            { id: "p10", name: "Bilal",        gender: "male",   avatar: m(45), parentId: "p7", spouseId: null,  rootId: "p1" },
+            { id: "p11", name: "Aisha",        gender: "female", avatar: w(46), parentId: "p1", spouseId: null,  rootId: "p1" },
+
+            /* ---------- SCENARIO 2: root "Hassan" ----------
+               Parents > 3 kids (2 married, 1 single) > 5 grandchildren
+               > 3 grandchildren married with their own children. */
+            { id: "h1",  name: "Hassan",  gender: "male",   avatar: m(51), parentId: null,  spouseId: "h2",  rootId: "h1" },
+            { id: "h2",  name: "Mariam",  gender: "female", avatar: w(51), parentId: null,  spouseId: "h1",  rootId: "h1" },
+            { id: "h3",  name: "Tariq",   gender: "male",   avatar: m(52), parentId: "h1",  spouseId: "h4",  rootId: "h1" },
+            { id: "h4",  name: "Huda",    gender: "female", avatar: w(52), parentId: null,  spouseId: "h3",  rootId: "h1" },
+            { id: "h5",  name: "Adam",    gender: "male",   avatar: m(53), parentId: "h3",  spouseId: "h6",  rootId: "h1" },
+            { id: "h6",  name: "Iman",    gender: "female", avatar: w(53), parentId: null,  spouseId: "h5",  rootId: "h1" },
+            { id: "h7",  name: "Musa",    gender: "male",   avatar: m(54), parentId: "h5",  spouseId: null,  rootId: "h1" },
+            { id: "h8",  name: "Sara",    gender: "female", avatar: w(55), parentId: "h3",  spouseId: "h9",  rootId: "h1" },
+            { id: "h9",  name: "Karim",   gender: "male",   avatar: m(55), parentId: null,  spouseId: "h8",  rootId: "h1" },
+            { id: "h10", name: "Lina",    gender: "female", avatar: w(56), parentId: "h8",  spouseId: null,  rootId: "h1" },
+            { id: "h11", name: "Idris",   gender: "male",   avatar: m(56), parentId: "h8",  spouseId: null,  rootId: "h1" },
+            { id: "h12", name: "Yasin",   gender: "male",   avatar: m(57), parentId: "h3",  spouseId: null,  rootId: "h1" },
+            { id: "h13", name: "Khalid",  gender: "male",   avatar: m(58), parentId: "h1",  spouseId: "h14", rootId: "h1" },
+            { id: "h14", name: "Sumaya",  gender: "female", avatar: w(58), parentId: null,  spouseId: "h13", rootId: "h1" },
+            { id: "h15", name: "Noor",    gender: "female", avatar: w(59), parentId: "h13", spouseId: "h16", rootId: "h1" },
+            { id: "h16", name: "Faris",   gender: "male",   avatar: m(59), parentId: null,  spouseId: "h15", rootId: "h1" },
+            { id: "h17", name: "Zayd",    gender: "male",   avatar: m(60), parentId: "h15", spouseId: null,  rootId: "h1" },
+            { id: "h18", name: "Hamza",   gender: "male",   avatar: m(61), parentId: "h13", spouseId: null,  rootId: "h1" },
+            { id: "h19", name: "Zainab",  gender: "female", avatar: w(62), parentId: "h1",  spouseId: null,  rootId: "h1" }
+        ];
+
+        /* ============================================================
+           FIREBASE / FIRESTORE INTEGRATION
+           --------------------------------------------------------
+           1. Create a Firebase project + Firestore database.
+           2. Paste your web app config below and set USE_FIREBASE = true.
+           3. Seed a "people" collection with documents shaped exactly
+              like the objects in peopleData above (the doc id should
+              match the "id" field, or just remove "id" and use the
+              auto doc id consistently in parentId/spouseId/rootId).
+           When USE_FIREBASE is false (or loading fails), the app falls
+           back to the local peopleData sample so it still works offline.
+           ============================================================ */
+        const USE_FIREBASE = false;
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        async function loadPeople() {
+            if (!USE_FIREBASE) return peopleData;
+            try {
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+                const { getFirestore, collection, getDocs } =
+                    await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
+                const app = initializeApp(firebaseConfig);
+                const db = getFirestore(app);
+                const snap = await getDocs(collection(db, 'people'));
+                const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                return docs.length ? docs : peopleData;
+            } catch (err) {
+                console.warn('Firestore load failed — using local sample data.', err);
+                return peopleData;
+            }
+        }
+
+        // Rebuild nested family trees from the flat (Firestore-shaped) list.
+        function buildTreesFromFlat(people) {
+            const byId = {};
+            people.forEach(p => { byId[p.id] = Object.assign({}, p, { children: [] }); });
+            people.forEach(p => {
+                const node = byId[p.id];
+                if (p.spouseId && byId[p.spouseId]) node.spouse = byId[p.spouseId];
+                if (p.parentId && byId[p.parentId]) byId[p.parentId].children.push(node);
+            });
+            return byId;
+        }
+
+        let familyData = [];
+
+        const appStage = document.getElementById('appStage');
+        const namesGrid = document.getElementById('namesGrid');
+        const searchInput = document.getElementById('searchInput');
+        const sortToggle = document.getElementById('sortToggle');
+        const backBtn = document.getElementById('backToDirectory');
+        const treeTargetName = document.getElementById('treeTargetName');
+        const treeCanvas = document.getElementById('treeCanvas');
+
+        function renderGrid(data) {
+            namesGrid.innerHTML = '';
+            data.forEach(person => {
+                const card = document.createElement('div');
+                card.className = 'name-card';
+                card.innerHTML = `
+                    <div class="avatar"><img src="${person.avatar}"></div>
+                    <div class="name-info">${person.name}</div>
+                `;
+                card.addEventListener('click', () => buildWireframeTreeMap(person));
+                namesGrid.appendChild(card);
+            });
+        }
+
+        function createPillNode(name, avatar, focusName) {
+            const avatarUrl = avatar || "https://via.placeholder.com/60";
+            return `
+                <div class="node-box ${name === focusName ? 'highlight' : ''}">
+                    <div class="avatar"><img src="${avatarUrl}"></div>
+                    <span class="node-txt">${name}</span>
+                </div>
+            `;
+        }
+
+        function renderCouple(node, isTop, focusName) {
+            const cls = isTop ? 'couple-unit-horizontal' : 'couple-unit-vertical';
+            let html = `<div class="${cls}">`;
+            html += createPillNode(node.name, node.avatar, focusName);
+            if (node.spouse) {
+                html += `<div class="spouse-plus">+</div>`;
+                html += createPillNode(node.spouse.name, node.spouse.avatar, focusName);
+            }
+            html += `</div>`;
+            return html;
+        }
+
+        // Recursively render a person/couple and any descendants.
+        function renderBranch(node, isTop, focusName) {
+            let html = renderCouple(node, isTop, focusName);
+            if (node.children && node.children.length) {
+                html += `<div class="v-line"></div>`;
+                html += `<div class="children-row">`;
+                node.children.forEach(child => {
+                    html += `<div class="child-branch">${renderBranch(child, false, focusName)}</div>`;
+                });
+                html += `</div>`;
+            }
+            return html;
+        }
+
+        function buildWireframeTreeMap(targetPerson) {
+            treeTargetName.textContent = `${targetPerson.name}'s Lineage`;
+            treeCanvas.innerHTML = '';
+
+            const treeInner = document.createElement('div');
+            treeInner.className = 'tree-inner';
+
+            const block = document.createElement('div');
+            block.className = 'generation-block';
+            block.innerHTML = renderBranch(targetPerson.root, true, targetPerson.name);
+            treeInner.appendChild(block);
+
+            treeCanvas.appendChild(treeInner);
+
+            // Slide viewport forward smoothly
+            appStage.style.transform = 'translateX(-50%)';
+            treeCanvas.scrollLeft = 0;
+        }
+
+        backBtn.addEventListener('click', () => { appStage.style.transform = 'translateX(0%)'; });
+
+        function processData() {
+            const query = searchInput.value.toLowerCase().trim();
+            const order = sortToggle.getAttribute('data-order');
+            let filtered = familyData.filter(person => person.name.toLowerCase().includes(query));
+            filtered.sort((a, b) => order === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name));
+            renderGrid(filtered);
+        }
+
+        searchInput.addEventListener('input', processData);
+        sortToggle.addEventListener('click', () => {
+            const currentOrder = sortToggle.getAttribute('data-order');
+            sortToggle.setAttribute('data-order', currentOrder === 'asc' ? 'desc' : 'asc');
+            sortToggle.innerHTML = `Sort <i class="fa-solid ${currentOrder === 'asc' ? 'fa-sort-down' : 'fa-sort-up'}"></i>`;
+            processData();
+        });
+
+        // Load people (Firestore or local sample), rebuild trees, render directory.
+        async function init() {
+            const people = await loadPeople();
+            const byId = buildTreesFromFlat(people);
+            familyData = people.map(p => ({
+                name: p.name,
+                avatar: p.avatar,
+                root: byId[p.rootId]
+            }));
+            processData();
+        }
+
+        init();
+    </script>
+</body>
+</html>
