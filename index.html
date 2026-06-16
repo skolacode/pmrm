@@ -603,7 +603,6 @@
                 const card = document.createElement('div');
                 card.className = 'name-card';
                 card.innerHTML = `
-                    <div class="avatar"><img src="${person.avatar}"></div>
                     <div class="name-info">${person.name}</div>
                 `;
                 card.addEventListener('click', () => buildWireframeTreeMap(person));
@@ -615,7 +614,6 @@
             const avatarUrl = avatar || "https://via.placeholder.com/60";
             return `
                 <div class="node-box ${name === focusName ? 'highlight' : ''}">
-                    <div class="avatar"><img src="${avatarUrl}"></div>
                     <span class="node-txt">${name}</span>
                 </div>
             `;
