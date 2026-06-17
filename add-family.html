@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PMRM · Add Family Member</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f4f1eb;
+            --card-bg: #fdfbf7;
+            --card-border: #e6e2da;
+            --text-main: #2c2a27;
+            --text-muted: #6e6a64;
+            --shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.08);
+            --primary: #4a5d4e;
+            --line-color: #bfae99;
+            --danger: #b5524a;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 12px;
+            color: var(--text-main);
+        }
+
+        .app-viewport {
+            width: 100%;
+            max-width: 1100px;
+            position: relative;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+            border: 4px solid #c9c3b8;
+            background: var(--card-bg);
+            overflow: hidden;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--card-border);
+            background: #ffffff;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: var(--text-main);
+            font-size: 1.1rem;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: #fff;
+        }
+
+        .page-header h1 { font-size: 1.2rem; }
+        .page-header p { font-size: 0.78rem; color: var(--text-muted); }
+
+        .body-wrap {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        @media (min-width: 860px) {
+            .body-wrap { grid-template-columns: 1fr 1fr; }
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+        }
+        .panel .panel-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .field { margin-bottom: 14px; }
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .field .hint {
+            font-weight: 400;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            padding: 11px 12px;
+            font-size: 0.9rem;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: #fff;
+            color: var(--text-main);
+            outline: none;
+        }
+        .field input:focus,
+        .field select:focus { border-color: var(--primary); }
+
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #3a4a3e; }
+        .btn-ghost {
+            background: #fff;
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+        }
+        .btn-ghost:hover { background: #f4f1eb; }
+        .btn-danger { background: var(--danger); color: #fff; }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .people-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .count-pill {
+            font-size: 0.75rem;
+            background: #f1f5f2;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .people-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+
+        .person-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 9px 12px;
+        }
+        .person-row .pr-avatar {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            background: #ded9d0;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .person-row .pr-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .person-row .pr-info { flex: 1; min-width: 0; }
+        .person-row .pr-name { font-size: 0.88rem; font-weight: 600; }
+        .person-row .pr-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .person-row .pr-actions { display: flex; gap: 6px; }
+        .icon-btn {
+            border: 1px solid var(--card-border);
+            background: #fff;
+            border-radius: 8px;
+            width: 30px; height: 30px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .icon-btn:hover { color: var(--text-main); background: #f4f1eb; }
+        .icon-btn.del:hover { color: var(--danger); border-color: var(--danger); }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 30px 10px;
+        }
+
+        .export-area {
+            width: 100%;
+            margin-top: 12px;
+            min-height: 120px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.75rem;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 12px;
+            background: #faf8f5;
+            color: var(--text-main);
+            resize: vertical;
+            display: none;
+        }
+
+        /* Gender radio pills */
+        .radio-group { display: flex; gap: 10px; }
+        .radio-pill {
+            flex: 1;
+            position: relative;
+            cursor: pointer;
+        }
+        .radio-pill input {
+            position: absolute;
+            opacity: 0;
+            inset: 0;
+            cursor: pointer;
+        }
+        .radio-pill span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 12px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            transition: all 0.15s ease;
+        }
+        .radio-pill input:checked + span {
+            border-color: var(--primary);
+            background: #f1f5f2;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Searchable combobox */
+        .combo { position: relative; }
+        .combo-input {
+            width: 100%;
+            padding: 11px 36px 11px 12px;
+            font-size: 0.9rem;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: #fff;
+            color: var(--text-main);
+            outline: none;
+        }
+        .combo-input:focus { border-color: var(--primary); }
+        .combo-clear {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            display: none;
+        }
+        .combo-clear:hover { background: #f4f1eb; color: var(--text-main); }
+        .combo.has-value .combo-clear { display: inline-flex; align-items: center; justify-content: center; }
+        .combo-list {
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 20;
+            display: none;
+        }
+        .combo-list.open { display: block; }
+        .combo-option {
+            padding: 9px 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+        }
+        .combo-option:hover,
+        .combo-option.active { background: #f1f5f2; }
+        .combo-option .opt-meta { font-size: 0.72rem; color: var(--text-muted); }
+        .combo-option.empty { color: var(--text-muted); cursor: default; }
+        .combo-option.empty:hover { background: none; }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--primary);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 50;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+</head>
+<body>
+    <div class="app-viewport">
+        <header class="page-header">
+            <a class="back-link" href="index.html" title="Back to directory">
+                <i class="fa-solid fa-arrow-left"></i>
+            </a>
+            <div>
+                <h1>Add Family Member</h1>
+                <p>PMRM Family Tree · data entry</p>
+            </div>
+        </header>
+
+        <div class="body-wrap">
+            <!-- FORM PANEL -->
+            <section class="panel">
+                <h2 id="formTitle">New Person</h2>
+                <p class="panel-sub">Fill in the details below. Fields marked with the parent/spouse selectors link this person into a tree.</p>
+
+                <form id="personForm">
+                    <input type="hidden" id="editingId" value="">
+
+                    <div class="field">
+                        <label for="name">Full name</label>
+                        <input type="text" id="name" placeholder="e.g. Abdul Rahman" required>
+                    </div>
+
+                    <div class="field">
+                        <label>Gender</label>
+                        <div class="radio-group">
+                            <label class="radio-pill">
+                                <input type="radio" name="gender" value="male" checked>
+                                <span><i class="fa-solid fa-mars"></i> Male</span>
+                            </label>
+                            <label class="radio-pill">
+                                <input type="radio" name="gender" value="female">
+                                <span><i class="fa-solid fa-venus"></i> Female</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Parent <span class="hint">(bloodline parent — leave empty for a root)</span></label>
+                        <div class="combo" id="parentCombo">
+                            <input type="hidden" id="parentId" value="">
+                            <input type="text" class="combo-input" id="parentInput" placeholder="Search a parent…" autocomplete="off">
+                            <button type="button" class="combo-clear" id="parentClear" title="Clear"><i class="fa-solid fa-xmark"></i></button>
+                            <div class="combo-list" id="parentList"></div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>Spouse <span class="hint">(optional)</span></label>
+                        <div class="combo" id="spouseCombo">
+                            <input type="hidden" id="spouseId" value="">
+                            <input type="text" class="combo-input" id="spouseInput" placeholder="Search a spouse…" autocomplete="off">
+                            <button type="button" class="combo-clear" id="spouseClear" title="Clear"><i class="fa-solid fa-xmark"></i></button>
+                            <div class="combo-list" id="spouseList"></div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> <span id="saveBtnLabel">Save Person</span>
+                        </button>
+                        <button type="button" class="btn btn-ghost" id="resetBtn">
+                            <i class="fa-solid fa-rotate-left"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- LIST PANEL -->
+            <section class="panel">
+                <div class="people-toolbar">
+                    <div>
+                        <h2 style="display:inline-block; margin-right:8px;">People</h2>
+                        <span class="count-pill" id="countPill">0</span>
+                    </div>
+                    <div class="form-actions" style="margin-top:0;">
+                        <button type="button" class="btn btn-ghost" id="exportBtn">
+                            <i class="fa-solid fa-code"></i> Export
+                        </button>
+                        <button type="button" class="btn btn-ghost" id="copyBtn">
+                            <i class="fa-solid fa-copy"></i> Copy JSON
+                        </button>
+                    </div>
+                </div>
+
+                <div class="people-list" id="peopleList"></div>
+
+                <textarea class="export-area" id="exportArea" readonly></textarea>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-danger" id="clearAllBtn" style="margin-top:6px;">
+                        <i class="fa-solid fa-trash"></i> Clear all data
+                    </button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const STORAGE_KEY = 'pmrm_people';
+
+        // Load any previously entered people from localStorage.
+        let people = [];
+        try {
+            people = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        } catch (e) {
+            people = [];
+        }
+
+        const form = document.getElementById('personForm');
+        const editingId = document.getElementById('editingId');
+        const nameEl = document.getElementById('name');
+        const parentIdEl = document.getElementById('parentId');
+        const spouseIdEl = document.getElementById('spouseId');
+        const peopleList = document.getElementById('peopleList');
+        const countPill = document.getElementById('countPill');
+        const exportArea = document.getElementById('exportArea');
+        const formTitle = document.getElementById('formTitle');
+        const saveBtnLabel = document.getElementById('saveBtnLabel');
+        const toast = document.getElementById('toast');
+
+        function getGender() {
+            const checked = form.querySelector('input[name="gender"]:checked');
+            return checked ? checked.value : 'male';
+        }
+        function setGender(value) {
+            const el = form.querySelector(`input[name="gender"][value="${value}"]`);
+            if (el) el.checked = true;
+        }
+
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(people));
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(showToast._t);
+            showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
+        }
+
+        function genId() {
+            let n = 1;
+            let id;
+            do { id = 'id' + n++; } while (people.some(p => p.id === id));
+            return id;
+        }
+
+        function nameOf(id) {
+            const p = people.find(x => x.id === id);
+            return p ? p.name : id;
+        }
+
+        /* ----- Searchable combobox (parent / spouse) ----- */
+        function makeCombo(prefix) {
+            const root = document.getElementById(prefix + 'Combo');
+            const hidden = document.getElementById(prefix + 'Id');
+            const input = document.getElementById(prefix + 'Input');
+            const list = document.getElementById(prefix + 'List');
+            const clear = document.getElementById(prefix + 'Clear');
+            let activeIndex = -1;
+
+            function selectablePeople() {
+                const skipId = editingId.value;
+                return people.filter(p => p.id !== skipId);
+            }
+
+            function setValue(id) {
+                hidden.value = id || '';
+                if (id) {
+                    input.value = nameOf(id);
+                    root.classList.add('has-value');
+                } else {
+                    input.value = '';
+                    root.classList.remove('has-value');
+                }
+            }
+
+            function openList(filter) {
+                const q = (filter || '').toLowerCase().trim();
+                const matches = selectablePeople()
+                    .filter(p => p.name.toLowerCase().includes(q));
+                if (!matches.length) {
+                    list.innerHTML = '<div class="combo-option empty">No matches</div>';
+                } else {
+                    list.innerHTML = matches.map((p, i) =>
+                        `<div class="combo-option" data-id="${p.id}" data-i="${i}">
+                            <span>${p.name}</span>
+                            <span class="opt-meta">${p.gender}${p.parentId ? ' · child of ' + nameOf(p.parentId) : ' · root'}</span>
+                        </div>`
+                    ).join('');
+                }
+                activeIndex = -1;
+                list.classList.add('open');
+            }
+
+            function closeList() {
+                list.classList.remove('open');
+                activeIndex = -1;
+            }
+
+            input.addEventListener('focus', () => openList(''));
+            input.addEventListener('input', () => {
+                hidden.value = '';
+                root.classList.remove('has-value');
+                openList(input.value);
+            });
+            input.addEventListener('keydown', (e) => {
+                const opts = [...list.querySelectorAll('.combo-option[data-id]')];
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIndex = Math.min(activeIndex + 1, opts.length - 1);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                } else if (e.key === 'Enter') {
+                    if (activeIndex >= 0 && opts[activeIndex]) {
+                        e.preventDefault();
+                        setValue(opts[activeIndex].dataset.id);
+                        closeList();
+                    }
+                    return;
+                } else if (e.key === 'Escape') {
+                    closeList();
+                    return;
+                } else {
+                    return;
+                }
+                opts.forEach(o => o.classList.remove('active'));
+                if (opts[activeIndex]) opts[activeIndex].classList.add('active');
+            });
+
+            list.addEventListener('mousedown', (e) => {
+                const opt = e.target.closest('.combo-option[data-id]');
+                if (!opt) return;
+                e.preventDefault();
+                setValue(opt.dataset.id);
+                closeList();
+            });
+
+            clear.addEventListener('click', () => { setValue(''); input.focus(); });
+
+            document.addEventListener('click', (e) => {
+                if (!root.contains(e.target)) closeList();
+            });
+
+            return { setValue, get value() { return hidden.value; } };
+        }
+
+        const parentCombo = makeCombo('parent');
+        const spouseCombo = makeCombo('spouse');
+
+        function renderList() {
+            countPill.textContent = people.length;
+            if (!people.length) {
+                peopleList.innerHTML = '<div class="empty-state">No people yet. Add your first family member using the form.</div>';
+                return;
+            }
+            peopleList.innerHTML = people.map(p => {
+                const rel = [];
+                if (p.parentId) rel.push('child of ' + (nameOf(p.parentId)));
+                else rel.push('root');
+                if (p.spouseId) rel.push('+ ' + nameOf(p.spouseId));
+                const avatar = p.avatar
+                    ? `<img src="${p.avatar}" alt="">`
+                    : `<i class="fa-solid fa-user" style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;color:#b3ada2;"></i>`;
+                return `
+                    <div class="person-row">
+                        <div class="pr-avatar">${avatar}</div>
+                        <div class="pr-info">
+                            <div class="pr-name">${p.name}</div>
+                            <div class="pr-meta">${p.id} · ${p.gender} · ${rel.join(' · ')}</div>
+                        </div>
+                        <div class="pr-actions">
+                            <button class="icon-btn" data-edit="${p.id}" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                            <button class="icon-btn del" data-del="${p.id}" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function nameOf(id) {
+            const p = people.find(x => x.id === id);
+            return p ? p.name : id;
+        }
+
+        function resetForm() {
+            form.reset();
+            editingId.value = '';
+            setGender('male');
+            parentCombo.setValue('');
+            spouseCombo.setValue('');
+            formTitle.textContent = 'New Person';
+            saveBtnLabel.textContent = 'Save Person';
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const isEditing = !!editingId.value;
+            const id = isEditing ? editingId.value : genId();
+
+            const parentId = parentCombo.value || null;
+            // A root person belongs to its own tree; otherwise inherit the
+            // parent's family root.
+            let rootId;
+            if (parentId) {
+                const parent = people.find(p => p.id === parentId);
+                rootId = parent ? parent.rootId : id;
+            } else {
+                rootId = id;
+            }
+
+            const record = {
+                id,
+                name: nameEl.value.trim(),
+                gender: getGender(),
+                avatar: null,
+                parentId,
+                spouseId: spouseCombo.value || null,
+                rootId
+            };
+
+            if (isEditing) {
+                const idx = people.findIndex(p => p.id === editingId.value);
+                people[idx] = record;
+            } else {
+                people.push(record);
+            }
+
+            // Keep spouse links reciprocal for convenience.
+            if (record.spouseId) {
+                const sp = people.find(p => p.id === record.spouseId);
+                if (sp && sp.spouseId !== record.id) {
+                    sp.spouseId = record.id;
+                    if (!sp.rootId) sp.rootId = record.rootId;
+                }
+            }
+
+            save();
+            renderList();
+            resetForm();
+            showToast(isEditing ? 'Person updated' : 'Person added');
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', resetForm);
+
+        peopleList.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('[data-edit]');
+            const delBtn = e.target.closest('[data-del]');
+            if (editBtn) {
+                const p = people.find(x => x.id === editBtn.dataset.edit);
+                if (!p) return;
+                editingId.value = p.id;
+                nameEl.value = p.name;
+                setGender(p.gender);
+                parentCombo.setValue(p.parentId || '');
+                spouseCombo.setValue(p.spouseId || '');
+                formTitle.textContent = 'Edit Person';
+                saveBtnLabel.textContent = 'Update Person';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else if (delBtn) {
+                const id = delBtn.dataset.del;
+                if (!confirm('Delete this person?')) return;
+                people = people.filter(p => p.id !== id);
+                // Clean up dangling references.
+                people.forEach(p => {
+                    if (p.parentId === id) p.parentId = null;
+                    if (p.spouseId === id) p.spouseId = null;
+                    if (p.rootId === id) p.rootId = p.id;
+                });
+                save();
+                renderList();
+                showToast('Person deleted');
+            }
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            exportArea.style.display = exportArea.style.display === 'block' ? 'none' : 'block';
+            exportArea.value = JSON.stringify(people, null, 2);
+        });
+
+        document.getElementById('copyBtn').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(JSON.stringify(people, null, 2));
+                showToast('JSON copied to clipboard');
+            } catch (e) {
+                exportArea.style.display = 'block';
+                exportArea.value = JSON.stringify(people, null, 2);
+                exportArea.select();
+                showToast('Copy not allowed — select & copy manually');
+            }
+        });
+
+        document.getElementById('clearAllBtn').addEventListener('click', () => {
+            if (!confirm('Delete ALL entered people? This cannot be undone.')) return;
+            people = [];
+            save();
+            renderList();
+            resetForm();
+            exportArea.style.display = 'none';
+            showToast('All data cleared');
+        });
+
+        // Initial paint.
+        renderList();
+    </script>
+</body>
+</html>
