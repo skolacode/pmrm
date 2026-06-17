@@ -615,7 +615,10 @@
             { id: "s11", name: "Kader Moideen",      gender: "male",   avatar: m(5),  parentId: "s3", spouseId: null,  rootId: "s1" },
 
             /* A. Abbas + Ibrahiyammal */
-            { id: "s12", name: "Ibrahiyammal",       gender: "female", avatar: w(6),  parentId: null, spouseId: "s9",  rootId: "s1" },
+            /* A. Abbas + Ibrahiyammal.  Ibrahiyammal is a blood child of the
+               separate Mutalib family (rootId "mt1"), so she carries a link
+               button in this tree that opens her own family. */
+            { id: "s12", name: "Ibrahiyammal",       gender: "female", avatar: w(6),  parentId: "mt1", spouseId: "s9",  rootId: "mt1" },
             { id: "s13", name: "Habib Mohammad",     gender: "male",   avatar: m(6),  parentId: "s9", spouseId: "s19", rootId: "s1" },
             { id: "s14", name: "Haja Najimudeen",    gender: "male",   avatar: m(7),  parentId: "s9", spouseId: null,  rootId: "s1" },
             { id: "s15", name: "Barakatullah Khan",  gender: "male",   avatar: m(8),  parentId: "s9", spouseId: null,  rootId: "s1" },
@@ -684,7 +687,19 @@
             { id: "k13", name: "Ubayathullah", gender: "male",   avatar: m(27), parentId: null,  spouseId: "k6",  rootId: "k1" },
             { id: "k14", name: "Mohamad Nasir",gender: "male",   avatar: m(28), parentId: "k6",  spouseId: null,  rootId: "k1" },
             { id: "k15", name: "Nazreen",      gender: "female", avatar: w(29), parentId: "k6",  spouseId: null,  rootId: "k1" },
-            { id: "k16", name: "Taznim",       gender: "female", avatar: w(30), parentId: "k6",  spouseId: null,  rootId: "k1" }
+            { id: "k16", name: "Taznim",       gender: "female", avatar: w(30), parentId: "k6",  spouseId: null,  rootId: "k1" },
+
+            /* ===========================================================
+               TREE C — root "Mutalib"   (rootId "mt1")
+               Mutalib > Ibrahiyammal / Nurjahan / Jabaraullah.
+               Ibrahiyammal married A. Abbas (Tree A), so she is the bridge
+               between this family and the Seeni Mohammad tree — a link icon
+               appears on her in both trees.
+               =========================================================== */
+            { id: "mt1", name: "Mutalib",      gender: "male",   avatar: m(29), parentId: null,  spouseId: null, rootId: "mt1" },
+            /* (Ibrahiyammal s12 above is the eldest child of Mutalib.) */
+            { id: "mt2", name: "Nurjahan",     gender: "female", avatar: w(31), parentId: "mt1", spouseId: null, rootId: "mt1" },
+            { id: "mt3", name: "Jabaraullah",  gender: "male",   avatar: m(30), parentId: "mt1", spouseId: null, rootId: "mt1" }
         ];
 
         /* ============================================================
