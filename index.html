@@ -323,6 +323,8 @@
         }
 
         .node-box .node-txt {
+            flex: 1;
+            min-width: 0;
             font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-main);
@@ -330,6 +332,24 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        /* Cross-family marriage link button (shown on married-in spouses) */
+        .link-btn {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            background: var(--primary);
+            color: #ffffff;
+            font-size: 0.62rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .link-btn:hover { background: #3a4a3e; transform: scale(1.12); }
 
         /* Perfect Vertical Line Connectors ('|') */
         .v-line {
@@ -533,7 +553,37 @@
             { id: "h16", name: "Faris",   gender: "male",   avatar: m(59), parentId: null,  spouseId: "h15", rootId: "h1" },
             { id: "h17", name: "Zayd",    gender: "male",   avatar: m(60), parentId: "h15", spouseId: null,  rootId: "h1" },
             { id: "h18", name: "Hamza",   gender: "male",   avatar: m(61), parentId: "h13", spouseId: null,  rootId: "h1" },
-            { id: "h19", name: "Zainab",  gender: "female", avatar: w(62), parentId: "h1",  spouseId: null,  rootId: "h1" }
+            { id: "h19", name: "Zainab",  gender: "female", avatar: w(62), parentId: "h1",  spouseId: null,  rootId: "h1" },
+
+            /* ---------- SCENARIO 3: CROSS-FAMILY MARRIAGE LINKS ----------
+               Two separate trees joined by marriage. Abu is a blood child
+               of Family A and Yasmin is a blood child of Family B; they
+               marry each other. In Family A's tree Yasmin appears as Abu's
+               married-in spouse with a link button that opens Family B,
+               where Abu in turn appears as a married-in spouse with a link
+               back to Family A. The shared children live under the husband
+               (Abu) and are therefore shown only in Family A. */
+
+            /* Family A — root "Ali" */
+            { id: "fa1", name: "Ali",     gender: "male",   avatar: m(70), parentId: null,  spouseId: "fa2", rootId: "fa1" },
+            { id: "fa2", name: "Janu",    gender: "female", avatar: w(70), parentId: null,  spouseId: "fa1", rootId: "fa1" },
+            { id: "fa3", name: "Abu",     gender: "male",   avatar: m(71), parentId: "fa1", spouseId: "fb7", rootId: "fa1" },
+            { id: "fa4", name: "Abi",     gender: "male",   avatar: m(72), parentId: "fa1", spouseId: null,  rootId: "fa1" },
+            { id: "fa5", name: "Omar A.", gender: "male",   avatar: m(73), parentId: "fa1", spouseId: null,  rootId: "fa1" },
+            { id: "fa6", name: "Jasmin",  gender: "female", avatar: w(71), parentId: "fa3", spouseId: null,  rootId: "fa1" },
+            { id: "fa7", name: "Yusuf A.",gender: "male",   avatar: m(74), parentId: "fa3", spouseId: null,  rootId: "fa1" },
+            { id: "fa8", name: "Doha",    gender: "female", avatar: w(72), parentId: "fa3", spouseId: null,  rootId: "fa1" },
+
+            /* Family B — root "Ramli" */
+            { id: "fb1", name: "Ramli",   gender: "male",   avatar: m(75), parentId: null,  spouseId: "fb2", rootId: "fb1" },
+            { id: "fb2", name: "Leha",    gender: "female", avatar: w(73), parentId: null,  spouseId: "fb1", rootId: "fb1" },
+            { id: "fb3", name: "Osman",   gender: "male",   avatar: m(76), parentId: "fb1", spouseId: "fb4", rootId: "fb1" },
+            { id: "fb4", name: "Juli",    gender: "female", avatar: w(74), parentId: null,  spouseId: "fb3", rootId: "fb1" },
+            { id: "fb5", name: "Kamsiah", gender: "female", avatar: w(75), parentId: "fb1", spouseId: "fb6", rootId: "fb1" },
+            { id: "fb6", name: "Yusuf B.",gender: "male",   avatar: m(77), parentId: null,  spouseId: "fb5", rootId: "fb1" },
+            { id: "fb7", name: "Yasmin",  gender: "female", avatar: w(76), parentId: "fb3", spouseId: "fa3", rootId: "fb1" },
+            { id: "fb8", name: "Jamshir", gender: "male",   avatar: m(78), parentId: "fb3", spouseId: null,  rootId: "fb1" },
+            { id: "fb9", name: "Jebat",   gender: "male",   avatar: m(79), parentId: "fb3", spouseId: null,  rootId: "fb1" }
         ];
 
         /* ============================================================
@@ -588,6 +638,7 @@
         }
 
         let familyData = [];
+        let peopleById = {};
 
         const appStage = document.getElementById('appStage');
         const namesGrid = document.getElementById('namesGrid');
@@ -605,48 +656,70 @@
                 card.innerHTML = `
                     <div class="name-info">${person.name}</div>
                 `;
-                card.addEventListener('click', () => buildWireframeTreeMap(person));
+                card.addEventListener('click', () => buildWireframeTreeMap(person.id));
                 namesGrid.appendChild(card);
             });
         }
 
-        function createPillNode(name, avatar, focusName) {
-            const avatarUrl = avatar || "https://via.placeholder.com/60";
+        function createPillNode(person, focusId, linkable) {
+            const isFocus = person.id === focusId;
+            const linkBtn = linkable
+                ? `<button class="link-btn" data-link="${person.id}" title="Open ${person.name}'s family">
+                       <i class="fa-solid fa-link"></i>
+                   </button>`
+                : '';
             return `
-                <div class="node-box ${name === focusName ? 'highlight' : ''}">
-                    <span class="node-txt">${name}</span>
+                <div class="node-box ${isFocus ? 'highlight' : ''}">
+                    <span class="node-txt">${person.name}</span>
+                    ${linkBtn}
                 </div>
             `;
         }
 
-        function renderCouple(node, isTop, focusName) {
+        function renderCouple(node, isTop, focusId) {
             const cls = isTop ? 'couple-unit-horizontal' : 'couple-unit-vertical';
             let html = `<div class="${cls}">`;
-            html += createPillNode(node.name, node.avatar, focusName);
+            // The bloodline person of THIS tree — never linkable here.
+            html += createPillNode(node, focusId, false);
             if (node.spouse) {
                 html += `<div class="spouse-plus">+</div>`;
-                html += createPillNode(node.spouse.name, node.spouse.avatar, focusName);
+                // A married-in spouse who is a blood child of another family
+                // gets a link button that jumps to that family (which links
+                // back here automatically).
+                const linkable = !!node.spouse.parentId;
+                html += createPillNode(node.spouse, focusId, linkable);
             }
             html += `</div>`;
             return html;
         }
 
         // Recursively render a person/couple and any descendants.
-        function renderBranch(node, isTop, focusName) {
-            let html = renderCouple(node, isTop, focusName);
-            if (node.children && node.children.length) {
+        function renderBranch(node, isTop, focusId) {
+            let html = renderCouple(node, isTop, focusId);
+            // Children belong to the couple. They are stored under whichever
+            // partner is the bloodline owner, so merge both partners' kids so
+            // the family shows up no matter which spouse we entered through.
+            const kids = [
+                ...(node.children || []),
+                ...((node.spouse && node.spouse.children) || [])
+            ];
+            if (kids.length) {
                 html += `<div class="v-line"></div>`;
                 html += `<div class="children-row">`;
-                node.children.forEach(child => {
-                    html += `<div class="child-branch">${renderBranch(child, false, focusName)}</div>`;
+                kids.forEach(child => {
+                    html += `<div class="child-branch">${renderBranch(child, false, focusId)}</div>`;
                 });
                 html += `</div>`;
             }
             return html;
         }
 
-        function buildWireframeTreeMap(targetPerson) {
-            treeTargetName.textContent = `${targetPerson.name}'s Lineage`;
+        function buildWireframeTreeMap(personId) {
+            const person = peopleById[personId];
+            if (!person) return;
+            const root = peopleById[person.rootId] || person;
+
+            treeTargetName.textContent = `${person.name}'s Lineage`;
             treeCanvas.innerHTML = '';
 
             const treeInner = document.createElement('div');
@@ -654,7 +727,7 @@
 
             const block = document.createElement('div');
             block.className = 'generation-block';
-            block.innerHTML = renderBranch(targetPerson.root, true, targetPerson.name);
+            block.innerHTML = renderBranch(root, true, person.id);
             treeInner.appendChild(block);
 
             treeCanvas.appendChild(treeInner);
@@ -663,6 +736,14 @@
             appStage.style.transform = 'translateX(-50%)';
             treeCanvas.scrollLeft = 0;
         }
+
+        // Clicking a link button on a married-in spouse opens their family
+        // tree, focused on that spouse.
+        treeCanvas.addEventListener('click', (e) => {
+            const btn = e.target.closest('.link-btn');
+            if (!btn) return;
+            buildWireframeTreeMap(btn.dataset.link);
+        });
 
         backBtn.addEventListener('click', () => { appStage.style.transform = 'translateX(0%)'; });
 
@@ -685,11 +766,11 @@
         // Load people (Firestore or local sample), rebuild trees, render directory.
         async function init() {
             const people = await loadPeople();
-            const byId = buildTreesFromFlat(people);
+            peopleById = buildTreesFromFlat(people);
             familyData = people.map(p => ({
+                id: p.id,
                 name: p.name,
-                avatar: p.avatar,
-                root: byId[p.rootId]
+                avatar: p.avatar
             }));
             processData();
         }
