@@ -247,13 +247,65 @@
         .tree-header-title p { font-size: 0.75rem; color: var(--text-muted); }
 
         /* Tree Diagram Container Map - Allows dynamic swipe panning on mobile viewports */
+        .tree-stage {
+            position: relative;
+        }
+
         .tree-canvas {
             padding: 30px 16px;
             overflow: auto;
             max-height: calc(100vh - 160px);
             background-color: #faf8f5;
+            background-image: radial-gradient(circle, #e9e4da 1px, transparent 1px);
+            background-size: 22px 22px;
             display: flex;
             -webkit-overflow-scrolling: touch;
+        }
+
+        /* Wrapper that gets scaled by the zoom controls. Using the `zoom`
+           property (not transform) so the scroll area reflows correctly. */
+        .tree-zoom {
+            margin: auto;
+            min-width: max-content;
+        }
+
+        /* Floating zoom controls */
+        .zoom-controls {
+            position: absolute;
+            right: 16px;
+            bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #ffffff;
+            border: 1px solid var(--card-border);
+            border-radius: 50px;
+            padding: 4px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+            z-index: 5;
+        }
+        .zoom-btn {
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s ease;
+        }
+        .zoom-btn:hover { background: #f1f5f2; color: var(--primary); }
+        .zoom-level {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            min-width: 42px;
+            text-align: center;
+            user-select: none;
         }
 
         /* Inner wrapper centers the tree when it fits and stays
@@ -322,6 +374,14 @@
             box-shadow: 0 4px 10px rgba(74, 93, 78, 0.15);
         }
 
+        /* Brief attention pulse on the person you opened the tree for. */
+        @keyframes nodePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(74, 93, 78, 0.45); }
+            70%  { box-shadow: 0 0 0 12px rgba(74, 93, 78, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 93, 78, 0); }
+        }
+        .node-box.pulse { animation: nodePulse 1.1s ease-out 2; }
+
         .node-box .node-txt {
             flex: 1;
             min-width: 0;
@@ -354,9 +414,9 @@
         /* Perfect Vertical Line Connectors ('|') */
         .v-line {
             width: 2px;
-            height: 28px;
+            height: 26px;
             background-color: var(--line-color);
-            margin: 4px 0;
+            margin: 0;
             position: relative;
         }
 
@@ -365,21 +425,7 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            gap: 24px;
             position: relative;
-            margin-top: 4px;
-            padding-top: 16px;
-        }
-
-        /* Dynamic horizontal linking line rule linking individual sibling units */
-        .children-row::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 20%;
-            right: 20%;
-            height: 2px;
-            background-color: var(--line-color);
         }
 
         .child-branch {
@@ -387,17 +433,39 @@
             flex-direction: column;
             align-items: center;
             position: relative;
+            /* Top space holds the connector lines; the side padding lets each
+               child's horizontal bar meet its neighbour with no gaps. */
+            padding: 22px 16px 0;
         }
 
-        /* Structural connection ticks pointing downwards onto the sub branch columns */
+        /* Vertical drop from the horizontal sibling bar down to each child. */
         .child-branch::before {
             content: '';
             position: absolute;
-            top: -16px;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 2px;
-            height: 16px;
+            height: 22px;
             background-color: var(--line-color);
         }
+
+        /* Horizontal sibling bar. Each child paints a full-width segment;
+           adjacent segments touch (thanks to the side padding) forming one
+           continuous line. The ends are trimmed to the outer children. */
+        .child-branch::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--line-color);
+        }
+        .child-branch:first-child::after { left: 50%; width: 50%; }
+        .child-branch:last-child::after  { width: 50%; }
+        /* A lone child needs no horizontal bar — just the vertical drop. */
+        .child-branch:only-child::after { display: none; }
 
         /* Mobile Scaling Media Queries overrides */
         @media (max-width: 480px) {
@@ -425,7 +493,7 @@
             .tree-canvas { padding: 24px 12px; max-height: calc(100vh - 130px); }
             .node-box { min-width: 110px; max-width: 140px; padding: 7px 10px; }
             .node-box .node-txt { font-size: 0.75rem; }
-            .children-row { gap: 16px; }
+            .child-branch { padding-left: 8px; padding-right: 8px; }
         }
 
         /* Desktop Scaling Media Queries overrides */
@@ -447,8 +515,7 @@
             .tree-header { padding: 24px 40px; }
             .node-box { min-width: 155px; padding: 10px 20px; }
             .node-box .node-txt { font-size: 0.88rem; }
-            .children-row { gap: 40px; }
-            .children-row::before { left: 25%; right: 25%; }
+            .child-branch { padding-left: 22px; padding-right: 22px; }
         }
     </style>
 </head>
@@ -494,8 +561,17 @@
                     </div>
                 </header>
 
-                <main class="tree-canvas" id="treeCanvas">
-                    </main>
+                <div class="tree-stage">
+                    <main class="tree-canvas" id="treeCanvas">
+                        </main>
+
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" id="zoomOut" title="Zoom out"><i class="fa-solid fa-minus"></i></button>
+                        <span class="zoom-level" id="zoomLevel">100%</span>
+                        <button class="zoom-btn" id="zoomIn" title="Zoom in"><i class="fa-solid fa-plus"></i></button>
+                        <button class="zoom-btn" id="zoomReset" title="Reset / fit"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                </div>
             </section>
 
         </div>
@@ -517,73 +593,98 @@
            The nested tree is rebuilt in the browser by buildTreesFromFlat().
            ============================================================ */
         const peopleData = [
-            /* ---------- SCENARIO 1: root "Abdul Rahman" ----------
-               Parents > 3 kids (2 married, 1 single) > the 2 married
-               kids each have children. */
-            { id: "p1",  name: "Abdul Rahman", gender: "male",   avatar: m(41), parentId: null, spouseId: "p2",  rootId: "p1" },
-            { id: "p2",  name: "Fatimah",      gender: "female", avatar: w(41), parentId: null, spouseId: "p1",  rootId: "p1" },
-            { id: "p3",  name: "Imran",        gender: "male",   avatar: m(42), parentId: "p1", spouseId: "p4",  rootId: "p1" },
-            { id: "p4",  name: "Nadia",        gender: "female", avatar: w(42), parentId: null, spouseId: "p3",  rootId: "p1" },
-            { id: "p5",  name: "Zara",         gender: "female", avatar: w(43), parentId: "p3", spouseId: null,  rootId: "p1" },
-            { id: "p6",  name: "Omar",         gender: "male",   avatar: m(43), parentId: "p3", spouseId: null,  rootId: "p1" },
-            { id: "p7",  name: "Yusuf",        gender: "male",   avatar: m(44), parentId: "p1", spouseId: "p8",  rootId: "p1" },
-            { id: "p8",  name: "Salma",        gender: "female", avatar: w(44), parentId: null, spouseId: "p7",  rootId: "p1" },
-            { id: "p9",  name: "Layla",        gender: "female", avatar: w(45), parentId: "p7", spouseId: null,  rootId: "p1" },
-            { id: "p10", name: "Bilal",        gender: "male",   avatar: m(45), parentId: "p7", spouseId: null,  rootId: "p1" },
-            { id: "p11", name: "Aisha",        gender: "female", avatar: w(46), parentId: "p1", spouseId: null,  rootId: "p1" },
+            /* ===========================================================
+               TREE A — root "Seeni Mohammad (Kambukarar)"   (rootId "s1")
+               Generations: Seeni Mohammad > Mohd Kassim / Rokaiya Ammal /
+               Aminah Ammal, then deeper through A. Abbas > Habib Mohammad
+               and Sultan > Abu Ayubul Ansari.
+               =========================================================== */
+            { id: "s1",  name: "Seeni Mohammad (Kambukarar)", gender: "male",   avatar: m(1),  parentId: null, spouseId: null,  rootId: "s1" },
 
-            /* ---------- SCENARIO 2: root "Hassan" ----------
-               Parents > 3 kids (2 married, 1 single) > 5 grandchildren
-               > 3 grandchildren married with their own children. */
-            { id: "h1",  name: "Hassan",  gender: "male",   avatar: m(51), parentId: null,  spouseId: "h2",  rootId: "h1" },
-            { id: "h2",  name: "Mariam",  gender: "female", avatar: w(51), parentId: null,  spouseId: "h1",  rootId: "h1" },
-            { id: "h3",  name: "Tariq",   gender: "male",   avatar: m(52), parentId: "h1",  spouseId: "h4",  rootId: "h1" },
-            { id: "h4",  name: "Huda",    gender: "female", avatar: w(52), parentId: null,  spouseId: "h3",  rootId: "h1" },
-            { id: "h5",  name: "Adam",    gender: "male",   avatar: m(53), parentId: "h3",  spouseId: "h6",  rootId: "h1" },
-            { id: "h6",  name: "Iman",    gender: "female", avatar: w(53), parentId: null,  spouseId: "h5",  rootId: "h1" },
-            { id: "h7",  name: "Musa",    gender: "male",   avatar: m(54), parentId: "h5",  spouseId: null,  rootId: "h1" },
-            { id: "h8",  name: "Sara",    gender: "female", avatar: w(55), parentId: "h3",  spouseId: "h9",  rootId: "h1" },
-            { id: "h9",  name: "Karim",   gender: "male",   avatar: m(55), parentId: null,  spouseId: "h8",  rootId: "h1" },
-            { id: "h10", name: "Lina",    gender: "female", avatar: w(56), parentId: "h8",  spouseId: null,  rootId: "h1" },
-            { id: "h11", name: "Idris",   gender: "male",   avatar: m(56), parentId: "h8",  spouseId: null,  rootId: "h1" },
-            { id: "h12", name: "Yasin",   gender: "male",   avatar: m(57), parentId: "h3",  spouseId: null,  rootId: "h1" },
-            { id: "h13", name: "Khalid",  gender: "male",   avatar: m(58), parentId: "h1",  spouseId: "h14", rootId: "h1" },
-            { id: "h14", name: "Sumaya",  gender: "female", avatar: w(58), parentId: null,  spouseId: "h13", rootId: "h1" },
-            { id: "h15", name: "Noor",    gender: "female", avatar: w(59), parentId: "h13", spouseId: "h16", rootId: "h1" },
-            { id: "h16", name: "Faris",   gender: "male",   avatar: m(59), parentId: null,  spouseId: "h15", rootId: "h1" },
-            { id: "h17", name: "Zayd",    gender: "male",   avatar: m(60), parentId: "h15", spouseId: null,  rootId: "h1" },
-            { id: "h18", name: "Hamza",   gender: "male",   avatar: m(61), parentId: "h13", spouseId: null,  rootId: "h1" },
-            { id: "h19", name: "Zainab",  gender: "female", avatar: w(62), parentId: "h1",  spouseId: null,  rootId: "h1" },
+            /* Gen 1 — children of Seeni Mohammad */
+            { id: "s3",  name: "Mohd Kassim",        gender: "male",   avatar: m(2),  parentId: "s1", spouseId: "s6",  rootId: "s1" },
+            { id: "s4",  name: "Rokaiya Ammal",      gender: "female", avatar: w(1),  parentId: "s1", spouseId: "s25", rootId: "s1" },
+            { id: "s5",  name: "Aminah Ammal",       gender: "female", avatar: w(2),  parentId: "s1", spouseId: null,  rootId: "s1" },
 
-            /* ---------- SCENARIO 3: CROSS-FAMILY MARRIAGE LINKS ----------
-               Two separate trees joined by marriage. Abu is a blood child
-               of Family A and Yasmin is a blood child of Family B; they
-               marry each other. In Family A's tree Yasmin appears as Abu's
-               married-in spouse with a link button that opens Family B,
-               where Abu in turn appears as a married-in spouse with a link
-               back to Family A. The shared children live under the husband
-               (Abu) and are therefore shown only in Family A. */
+            /* Mohd Kassim + Sabiya Ammal */
+            { id: "s6",  name: "Sabiya Ammal",       gender: "female", avatar: w(3),  parentId: null, spouseId: "s3",  rootId: "s1" },
+            { id: "s7",  name: "Sooriyath",          gender: "female", avatar: w(4),  parentId: "s3", spouseId: null,  rootId: "s1" },
+            { id: "s8",  name: "Saurab",             gender: "female", avatar: w(5),  parentId: "s3", spouseId: null,  rootId: "s1" },
+            { id: "s9",  name: "A. Abbas",           gender: "male",   avatar: m(3),  parentId: "s3", spouseId: "s12", rootId: "s1" },
+            { id: "s10", name: "Seeni",              gender: "male",   avatar: m(4),  parentId: "s3", spouseId: null,  rootId: "s1" },
+            { id: "s11", name: "Kader Moideen",      gender: "male",   avatar: m(5),  parentId: "s3", spouseId: null,  rootId: "s1" },
 
-            /* Family A — root "Ali" */
-            { id: "fa1", name: "Ali",     gender: "male",   avatar: m(70), parentId: null,  spouseId: "fa2", rootId: "fa1" },
-            { id: "fa2", name: "Janu",    gender: "female", avatar: w(70), parentId: null,  spouseId: "fa1", rootId: "fa1" },
-            { id: "fa3", name: "Abu",     gender: "male",   avatar: m(71), parentId: "fa1", spouseId: "fb7", rootId: "fa1" },
-            { id: "fa4", name: "Abi",     gender: "male",   avatar: m(72), parentId: "fa1", spouseId: null,  rootId: "fa1" },
-            { id: "fa5", name: "Omar A.", gender: "male",   avatar: m(73), parentId: "fa1", spouseId: null,  rootId: "fa1" },
-            { id: "fa6", name: "Jasmin",  gender: "female", avatar: w(71), parentId: "fa3", spouseId: null,  rootId: "fa1" },
-            { id: "fa7", name: "Yusuf A.",gender: "male",   avatar: m(74), parentId: "fa3", spouseId: null,  rootId: "fa1" },
-            { id: "fa8", name: "Doha",    gender: "female", avatar: w(72), parentId: "fa3", spouseId: null,  rootId: "fa1" },
+            /* A. Abbas + Ibrahiyammal */
+            { id: "s12", name: "Ibrahiyammal",       gender: "female", avatar: w(6),  parentId: null, spouseId: "s9",  rootId: "s1" },
+            { id: "s13", name: "Habib Mohammad",     gender: "male",   avatar: m(6),  parentId: "s9", spouseId: "s19", rootId: "s1" },
+            { id: "s14", name: "Haja Najimudeen",    gender: "male",   avatar: m(7),  parentId: "s9", spouseId: null,  rootId: "s1" },
+            { id: "s15", name: "Barakatullah Khan",  gender: "male",   avatar: m(8),  parentId: "s9", spouseId: null,  rootId: "s1" },
+            { id: "s16", name: "Jahira Banu",        gender: "female", avatar: w(7),  parentId: "s9", spouseId: null,  rootId: "s1" },
+            { id: "s17", name: "Mohammad Sirajuddin",gender: "male",   avatar: m(9),  parentId: "s9", spouseId: null,  rootId: "s1" },
+            { id: "s18", name: "Bazeela",            gender: "female", avatar: w(8),  parentId: "s9", spouseId: null,  rootId: "s1" },
 
-            /* Family B — root "Ramli" */
-            { id: "fb1", name: "Ramli",   gender: "male",   avatar: m(75), parentId: null,  spouseId: "fb2", rootId: "fb1" },
-            { id: "fb2", name: "Leha",    gender: "female", avatar: w(73), parentId: null,  spouseId: "fb1", rootId: "fb1" },
-            { id: "fb3", name: "Osman",   gender: "male",   avatar: m(76), parentId: "fb1", spouseId: "fb4", rootId: "fb1" },
-            { id: "fb4", name: "Juli",    gender: "female", avatar: w(74), parentId: null,  spouseId: "fb3", rootId: "fb1" },
-            { id: "fb5", name: "Kamsiah", gender: "female", avatar: w(75), parentId: "fb1", spouseId: "fb6", rootId: "fb1" },
-            { id: "fb6", name: "Yusuf B.",gender: "male",   avatar: m(77), parentId: null,  spouseId: "fb5", rootId: "fb1" },
-            { id: "fb7", name: "Yasmin",  gender: "female", avatar: w(76), parentId: "fb3", spouseId: "fa3", rootId: "fb1" },
-            { id: "fb8", name: "Jamshir", gender: "male",   avatar: m(78), parentId: "fb3", spouseId: null,  rootId: "fb1" },
-            { id: "fb9", name: "Jebat",   gender: "male",   avatar: m(79), parentId: "fb3", spouseId: null,  rootId: "fb1" }
+            /* Habib Mohammad + Nooriya Banu */
+            { id: "s19", name: "Nooriya Banu",       gender: "female", avatar: w(9),  parentId: null,  spouseId: "s13", rootId: "s1" },
+            { id: "s20", name: "Mohamed Azli",       gender: "male",   avatar: m(10), parentId: "s13", spouseId: null,  rootId: "s1" },
+            { id: "s21", name: "Azia",               gender: "female", avatar: w(10), parentId: "s13", spouseId: null,  rootId: "s1" },
+            { id: "s22", name: "Mohd Azurul",        gender: "male",   avatar: m(11), parentId: "s13", spouseId: null,  rootId: "s1" },
+            { id: "s23", name: "Azura",              gender: "female", avatar: w(11), parentId: "s13", spouseId: null,  rootId: "s1" },
+            { id: "s24", name: "Azreena",            gender: "female", avatar: w(12), parentId: "s13", spouseId: null,  rootId: "s1" },
+
+            /* Rokaiya Ammal + Abdul Hameed (kaandakarar son) */
+            { id: "s25", name: "Abdul Hameed",       gender: "male",   avatar: m(12), parentId: null, spouseId: "s4",  rootId: "s1" },
+            { id: "s26", name: "Salma",              gender: "female", avatar: w(13), parentId: "s4", spouseId: null,  rootId: "s1" },
+            { id: "s27", name: "Senni Kader",        gender: "male",   avatar: m(13), parentId: "s4", spouseId: null,  rootId: "s1" },
+            { id: "s28", name: "Kasura",             gender: "female", avatar: w(14), parentId: "s4", spouseId: null,  rootId: "s1" },
+            { id: "s29", name: "Sultan",             gender: "male",   avatar: m(14), parentId: "s4", spouseId: "s33", rootId: "s1" },
+            { id: "s30", name: "Saburan Jamila",     gender: "female", avatar: w(15), parentId: "s4", spouseId: null,  rootId: "s1" },
+            { id: "s31", name: "Mehar",              gender: "female", avatar: w(16), parentId: "s4", spouseId: null,  rootId: "s1" },
+            { id: "s32", name: "Olina",              gender: "female", avatar: w(17), parentId: "s4", spouseId: null,  rootId: "s1" },
+
+            /* Sultan + Pathaisha */
+            { id: "s33", name: "Pathaisha",              gender: "female", avatar: w(18), parentId: null,  spouseId: "s29", rootId: "s1" },
+            { id: "s34", name: "Abu Ayubul Ansari",      gender: "male",   avatar: m(15), parentId: "s29", spouseId: "s39", rootId: "s1" },
+            { id: "s35", name: "Ajimul Naseerullakhan",  gender: "male",   avatar: m(16), parentId: "s29", spouseId: null,  rootId: "s1" },
+            { id: "s36", name: "Aziz Rahman",            gender: "male",   avatar: m(17), parentId: "s29", spouseId: null,  rootId: "s1" },
+            { id: "s37", name: "Askar Nisha Banu",       gender: "female", avatar: w(19), parentId: "s29", spouseId: null,  rootId: "s1" },
+            { id: "s38", name: "Azliza Banu",            gender: "female", avatar: w(20), parentId: "s29", spouseId: null,  rootId: "s1" },
+
+            /* Abu Ayubul Ansari + Zahira Banu */
+            { id: "s39", name: "Zahira Banu",          gender: "female", avatar: w(21), parentId: null,  spouseId: "s34", rootId: "s1" },
+            { id: "s40", name: "Muhamad Ashsiq",       gender: "male",   avatar: m(18), parentId: "s34", spouseId: null,  rootId: "s1" },
+            { id: "s41", name: "Muhamad Amzath Khan",  gender: "male",   avatar: m(19), parentId: "s34", spouseId: null,  rootId: "s1" },
+            { id: "s42", name: "Aishah Sahfika",       gender: "female", avatar: w(22), parentId: "s34", spouseId: null,  rootId: "s1" },
+            { id: "s43", name: "Muhamad Ahzaz Khan",   gender: "male",   avatar: m(20), parentId: "s34", spouseId: null,  rootId: "s1" },
+
+            /* ===========================================================
+               TREE B — root "Ahmad Kabir"   (rootId "k1")
+               Ahmad Kabir + Mehar Nisa > Hyder Ali > Mohamed Burhanudeen
+               > Yusuf Kabir; and Roseeya Begum > Mohamad Nasir.
+               =========================================================== */
+            { id: "k1",  name: "Ahmad Kabir",  gender: "male",   avatar: m(21), parentId: null, spouseId: "k2",  rootId: "k1" },
+            { id: "k2",  name: "Mehar Nisa",   gender: "female", avatar: w(23), parentId: null, spouseId: "k1",  rootId: "k1" },
+
+            /* Children of Ahmad Kabir + Mehar Nisa */
+            { id: "k3",  name: "Mumtaj",       gender: "female", avatar: w(24), parentId: "k1", spouseId: null,  rootId: "k1" },
+            { id: "k4",  name: "Hyder Ali",    gender: "male",   avatar: m(22), parentId: "k1", spouseId: "k7",  rootId: "k1" },
+            { id: "k5",  name: "Thahir Ali",   gender: "male",   avatar: m(23), parentId: "k1", spouseId: null,  rootId: "k1" },
+            { id: "k6",  name: "Roseeya Begum",gender: "female", avatar: w(25), parentId: "k1", spouseId: "k13", rootId: "k1" },
+
+            /* Hyder Ali + Najhath Umraha Banu */
+            { id: "k7",  name: "Najhath Umraha Banu", gender: "female", avatar: w(26), parentId: null,  spouseId: "k4",  rootId: "k1" },
+            { id: "k8",  name: "Mohamed Burhanudeen", gender: "male",   avatar: m(24), parentId: "k4",  spouseId: "k11", rootId: "k1" },
+            { id: "k9",  name: "Ahmad Ibrahim",       gender: "male",   avatar: m(25), parentId: "k4",  spouseId: null,  rootId: "k1" },
+            { id: "k10", name: "Noorul Fahimah",      gender: "female", avatar: w(27), parentId: "k4",  spouseId: null,  rootId: "k1" },
+
+            /* Mohamed Burhanudeen + Safina */
+            { id: "k11", name: "Safina",       gender: "female", avatar: w(28), parentId: null,  spouseId: "k8",  rootId: "k1" },
+            { id: "k12", name: "Yusuf Kabir",  gender: "male",   avatar: m(26), parentId: "k8",  spouseId: null,  rootId: "k1" },
+
+            /* Roseeya Begum + Ubayathullah */
+            { id: "k13", name: "Ubayathullah", gender: "male",   avatar: m(27), parentId: null,  spouseId: "k6",  rootId: "k1" },
+            { id: "k14", name: "Mohamad Nasir",gender: "male",   avatar: m(28), parentId: "k6",  spouseId: null,  rootId: "k1" },
+            { id: "k15", name: "Nazreen",      gender: "female", avatar: w(29), parentId: "k6",  spouseId: null,  rootId: "k1" },
+            { id: "k16", name: "Taznim",       gender: "female", avatar: w(30), parentId: "k6",  spouseId: null,  rootId: "k1" }
         ];
 
         /* ============================================================
@@ -647,6 +748,10 @@
         const backBtn = document.getElementById('backToDirectory');
         const treeTargetName = document.getElementById('treeTargetName');
         const treeCanvas = document.getElementById('treeCanvas');
+        const zoomInBtn = document.getElementById('zoomIn');
+        const zoomOutBtn = document.getElementById('zoomOut');
+        const zoomResetBtn = document.getElementById('zoomReset');
+        const zoomLevelEl = document.getElementById('zoomLevel');
 
         function renderGrid(data) {
             namesGrid.innerHTML = '';
@@ -722,6 +827,11 @@
             treeTargetName.textContent = `${person.name}'s Lineage`;
             treeCanvas.innerHTML = '';
 
+            // Zoom wrapper -> inner -> generation block.
+            const zoomWrap = document.createElement('div');
+            zoomWrap.className = 'tree-zoom';
+            zoomWrap.id = 'treeZoom';
+
             const treeInner = document.createElement('div');
             treeInner.className = 'tree-inner';
 
@@ -729,13 +839,85 @@
             block.className = 'generation-block';
             block.innerHTML = renderBranch(root, true, person.id);
             treeInner.appendChild(block);
+            zoomWrap.appendChild(treeInner);
 
-            treeCanvas.appendChild(treeInner);
+            treeCanvas.appendChild(zoomWrap);
 
             // Slide viewport forward smoothly
             appStage.style.transform = 'translateX(-50%)';
             treeCanvas.scrollLeft = 0;
+            // Start zoomed in on the selected person & their immediate family,
+            // then let the user zoom out to see the wider tree.
+            focusSelected();
         }
+
+        /* ---------------- Zoom controls ---------------- */
+        const MIN_ZOOM = 0.4, MAX_ZOOM = 2;
+        const FOCUS_ZOOM = 1; // readable level when first opening a person
+        let zoom = 1;
+
+        function applyZoom() {
+            const wrap = document.getElementById('treeZoom');
+            if (wrap) wrap.style.zoom = zoom;
+            zoomLevelEl.textContent = Math.round(zoom * 100) + '%';
+        }
+
+        function setZoom(z) {
+            zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
+            applyZoom();
+        }
+
+        // Center the currently highlighted person within the canvas viewport.
+        function centerHighlighted() {
+            const node = treeCanvas.querySelector('.node-box.highlight');
+            if (!node) return;
+            const canvasRect = treeCanvas.getBoundingClientRect();
+            const nodeRect = node.getBoundingClientRect();
+            treeCanvas.scrollLeft += (nodeRect.left + nodeRect.width / 2) - (canvasRect.left + canvasRect.width / 2);
+            treeCanvas.scrollTop  += (nodeRect.top + nodeRect.height / 2) - (canvasRect.top + canvasRect.height / 3);
+        }
+
+        // Open zoomed in on the selected person, centered, with a brief pulse.
+        function focusSelected() {
+            setZoom(FOCUS_ZOOM);
+            // Wait for layout/zoom to settle before measuring positions.
+            requestAnimationFrame(() => {
+                centerHighlighted();
+                const node = treeCanvas.querySelector('.node-box.highlight');
+                if (node) {
+                    node.classList.remove('pulse');
+                    // reflow so the animation can replay on every open
+                    void node.offsetWidth;
+                    node.classList.add('pulse');
+                }
+            });
+        }
+
+        // Auto-fit the whole tree to the available canvas width (zoom out).
+        function fitZoom() {
+            const wrap = document.getElementById('treeZoom');
+            if (!wrap) return;
+            wrap.style.zoom = 1;
+            const available = treeCanvas.clientWidth - 32; // minus padding
+            const needed = wrap.scrollWidth;
+            if (needed > available) {
+                setZoom(Math.max(MIN_ZOOM, available / needed));
+            } else {
+                zoom = 1;
+                applyZoom();
+            }
+        }
+
+        zoomInBtn.addEventListener('click', () => setZoom(zoom + 0.1));
+        zoomOutBtn.addEventListener('click', () => setZoom(zoom - 0.1));
+        zoomResetBtn.addEventListener('click', fitZoom);
+
+        // Ctrl/⌘ + wheel to zoom over the canvas.
+        treeCanvas.addEventListener('wheel', (e) => {
+            if (!(e.ctrlKey || e.metaKey)) return;
+            e.preventDefault();
+            setZoom(zoom + (e.deltaY < 0 ? 0.08 : -0.08));
+        }, { passive: false });
 
         // Clicking a link button on a married-in spouse opens their family
         // tree, focused on that spouse.
